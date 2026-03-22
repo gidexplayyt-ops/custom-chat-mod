@@ -36,3 +36,14 @@
 2. Установи [Forge 1.19.2](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.19.2.html)
 3. Помести `.jar` файл в папку `.minecraft/mods/`
 4. Запусти игру
+
+## 📸 Скриншоты
+
+### Чат по центру экрана
+![Chat Overlay](screenshots/chat_overlay.png)
+
+### Окно чата с историей
+![Chat Window](screenshots/chat_window.png)
+
+### Кастомный ник и цвет
+![Custom Nickname](screenshots/custom_nickname.png)
