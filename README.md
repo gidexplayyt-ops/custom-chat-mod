@@ -42,8 +42,11 @@
 ### Чат по центру экрана
 ![Chat Overlay](screenshots/chat_overlay.png)
 
-### Окно чата с историей
+### Окно чата с историей (v2.0.0)
 ![Chat Window](screenshots/chat_window.png)
 
 ### Кастомный ник и цвет
 ![Custom Nickname](screenshots/custom_nickname.png)
+
+### Настройки
+![Settings](screenshots/chat_settings.png)
