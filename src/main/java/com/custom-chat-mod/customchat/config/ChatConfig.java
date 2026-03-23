@@ -1,12 +1,21 @@
 package com.yourname.customchat.config;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import net.minecraft.client.Minecraft;
+
+import java.io.*;
+import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ChatConfig {
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Path CONFIG_DIR = Paths.get(Minecraft.getInstance().gameDirectory.getPath(), "custom-chat-mod");
+    private static final Path CONFIG_FILE = CONFIG_DIR.resolve("config.json");
+    
+    private static ConfigData config = new ConfigData();
     private static final Map<String, String> nameColors = new HashMap<>();
-    private static String customNickname = null;
-    private static String nicknameColor = "§f";
     
     static {
         nameColors.put("Торговец", "§6");
@@ -15,38 +24,126 @@ public class ChatConfig {
         nameColors.put("Квестодатель", "§b");
         nameColors.put("Жрец", "§e");
         nameColors.put("Кузнец", "§7");
+        
+        loadConfig();
     }
     
+    public static class ConfigData {
+        public String customNickname = null;
+        public String nicknameColor = "§f";
+        public int chatPositionX = 50; // процент от ширины экрана
+        public int chatPositionY = 85; // процент от высоты экрана
+        public boolean showPlayerHeads = true;
+        public int messageDuration = 10; // секунд
+    }
+    
+    public static void loadConfig() {
+        try {
+            if (!Files.exists(CONFIG_DIR)) {
+                Files.createDirectories(CONFIG_DIR);
+            }
+            
+            if (Files.exists(CONFIG_FILE)) {
+                Reader reader = Files.newBufferedReader(CONFIG_FILE);
+                config = GSON.fromJson(reader, ConfigData.class);
+                reader.close();
+            } else {
+                saveConfig();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public static void saveConfig() {
+        try {
+            if (!Files.exists(CONFIG_DIR)) {
+                Files.createDirectories(CONFIG_DIR);
+            }
+            
+            Writer writer = Files.newBufferedWriter(CONFIG_FILE);
+            GSON.toJson(config, writer);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    // Позиция чата
+    public static int getChatPositionX() {
+        return config.chatPositionX;
+    }
+    
+    public static void setChatPositionX(int x) {
+        config.chatPositionX = Math.max(0, Math.min(100, x));
+        saveConfig();
+    }
+    
+    public static int getChatPositionY() {
+        return config.chatPositionY;
+    }
+    
+    public static void setChatPositionY(int y) {
+        config.chatPositionY = Math.max(0, Math.min(100, y));
+        saveConfig();
+    }
+    
+    // Показывать головы
+    public static boolean showPlayerHeads() {
+        return config.showPlayerHeads;
+    }
+    
+    public static void setShowPlayerHeads(boolean show) {
+        config.showPlayerHeads = show;
+        saveConfig();
+    }
+    
+    // Длительность сообщения
+    public static int getMessageDuration() {
+        return config.messageDuration;
+    }
+    
+    public static void setMessageDuration(int seconds) {
+        config.messageDuration = Math.max(1, Math.min(60, seconds));
+        saveConfig();
+    }
+    
+    // Ник
+    public static void setCustomNickname(String nickname) {
+        config.customNickname = nickname;
+        saveConfig();
+    }
+    
+    public static String getCustomNickname() {
+        return config.customNickname;
+    }
+    
+    public static boolean hasCustomNickname() {
+        return config.customNickname != null && !config.customNickname.isEmpty();
+    }
+    
+    public static void clearCustomNickname() {
+        config.customNickname = null;
+        saveConfig();
+    }
+    
+    // Цвет ника
+    public static void setNicknameColor(String colorCode) {
+        config.nicknameColor = colorCode;
+        saveConfig();
+    }
+    
+    public static String getNicknameColor() {
+        return config.nicknameColor;
+    }
+    
+    // Цвета NPC
     public static String getNameColor(String name) {
         return nameColors.getOrDefault(name, "§f");
     }
     
     public static void setNameColor(String name, String colorCode) {
         nameColors.put(name, colorCode);
-    }
-    
-    public static void setCustomNickname(String nickname) {
-        customNickname = nickname;
-    }
-    
-    public static String getCustomNickname() {
-        return customNickname;
-    }
-    
-    public static boolean hasCustomNickname() {
-        return customNickname != null && !customNickname.isEmpty();
-    }
-    
-    public static void clearCustomNickname() {
-        customNickname = null;
-    }
-    
-    public static void setNicknameColor(String colorCode) {
-        nicknameColor = colorCode;
-    }
-    
-    public static String getNicknameColor() {
-        return nicknameColor;
     }
     
     public static String parseColorName(String colorName) {

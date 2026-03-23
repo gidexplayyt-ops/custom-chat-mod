@@ -9,11 +9,15 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.client.gui.components.CommandSuggestions;
+import net.minecraft.commands.SharedSuggestionProvider;
 
 import java.util.List;
 
 public class CustomChatScreen extends ChatScreen {
     private EditBox customInput;
+    private CommandSuggestions commandSuggestions;
     private static final int MAX_CHAT_LINES = 10;
     private final String defaultText;
     private int inputY;
@@ -26,6 +30,8 @@ public class CustomChatScreen extends ChatScreen {
     @Override
     protected void init() {
         super.init();
+        
+        ChatHistory.resetHistoryIndex();
         
         if (this.input != null) {
             this.input.setVisible(false);
@@ -54,6 +60,21 @@ public class CustomChatScreen extends ChatScreen {
         
         this.addRenderableWidget(this.customInput);
         this.setInitialFocus(this.customInput);
+        
+        // Подсказки команд (TAB)
+        this.commandSuggestions = new CommandSuggestions(
+            this.minecraft,
+            this,
+            this.customInput,
+            this.font,
+            false,
+            false,
+            1,
+            10,
+            true,
+            -805306368
+        );
+        this.commandSuggestions.updateCommandInfo();
     }
 
     @Override
@@ -83,7 +104,6 @@ public class CustomChatScreen extends ChatScreen {
         int boxX = this.width / 2 - boxWidth / 2;
         int boxY = this.height / 2 - boxHeight / 2 + 40;
         
-        // Только фон без границы
         fill(poseStack, boxX, boxY, boxX + boxWidth, boxY + boxHeight, 0xE0101010);
         
         String title = "§l§fЧат";
@@ -96,7 +116,10 @@ public class CustomChatScreen extends ChatScreen {
         
         this.customInput.render(poseStack, mouseX, mouseY, partialTick);
         
-        String hint = "§7[Enter] §fОтправить  §7[Esc] §fЗакрыть";
+        // Рендер подсказок команд
+        this.commandSuggestions.render(poseStack, mouseX, mouseY);
+        
+        String hint = "§7[Enter] §fОтправить  §7[Esc] §fЗакрыть  §7[↑↓] §fИстория  §7[Tab] §fКоманды";
         int hintWidth = this.font.width(hint);
         this.font.drawShadow(poseStack, hint, this.width / 2f - hintWidth / 2f, this.inputY + 25, 0xAAAAAA);
     }
@@ -115,7 +138,9 @@ public class CustomChatScreen extends ChatScreen {
             ChatHistory.ChatMessage msg = messages.get(i);
             int msgY = y + i * lineHeight;
             
-            renderPlayerHead(poseStack, x, msgY);
+            if (ChatConfig.showPlayerHeads()) {
+                renderPlayerHead(poseStack, x, msgY);
+            }
             
             String colorCode = getColorForSender(msg.sender);
             String formattedText = colorCode + msg.sender + "§7: §f" + msg.message;
@@ -128,7 +153,8 @@ public class CustomChatScreen extends ChatScreen {
                 trimmed += "...";
             }
             
-            this.font.drawShadow(poseStack, trimmed, x + 16, msgY + 3, 0xFFFFFF);
+            int textX = ChatConfig.showPlayerHeads() ? x + 16 : x;
+            this.font.drawShadow(poseStack, trimmed, textX, msgY + 3, 0xFFFFFF);
         }
     }
     
@@ -160,9 +186,35 @@ public class CustomChatScreen extends ChatScreen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // TAB для автодополнения
+        if (keyCode == 258) { // Tab
+            this.commandSuggestions.keyPressed(keyCode, scanCode, modifiers);
+            return true;
+        }
+        
+        // Стрелка вверх - предыдущее сообщение
+        if (keyCode == 265) { // Up
+            String prev = ChatHistory.getPreviousMessage();
+            if (prev != null) {
+                this.customInput.setValue(prev);
+                this.customInput.moveCursorToEnd();
+            }
+            return true;
+        }
+        
+        // Стрелка вниз - следующее сообщение
+        if (keyCode == 264) { // Down
+            String next = ChatHistory.getNextMessage();
+            this.customInput.setValue(next);
+            this.customInput.moveCursorToEnd();
+            return true;
+        }
+        
+        // Enter - отправка
         if (keyCode == 257 || keyCode == 335) {
             String message = this.customInput.getValue().trim();
             if (!message.isEmpty()) {
+                ChatHistory.addSentMessage(message);
                 if (this.input != null) {
                     this.input.setValue(message);
                 }
@@ -170,16 +222,38 @@ public class CustomChatScreen extends ChatScreen {
             }
             this.minecraft.setScreen(null);
             return true;
-        } else if (keyCode == 256) {
+        }
+        
+        // Escape - закрыть
+        if (keyCode == 256) {
             this.minecraft.setScreen(null);
             return true;
         }
+        
         return this.customInput.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
-        return this.customInput.charTyped(codePoint, modifiers);
+        boolean result = this.customInput.charTyped(codePoint, modifiers);
+        this.commandSuggestions.updateCommandInfo();
+        return result;
+    }
+    
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (this.commandSuggestions.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+    
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        if (this.commandSuggestions.mouseScrolled(delta)) {
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, delta);
     }
     
     @Override

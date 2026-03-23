@@ -3,12 +3,16 @@ package com.yourname.customchat;
 import com.yourname.customchat.config.ChatConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChatHistory {
     private static final List<ChatMessage> messages = new ArrayList<>();
+    private static final List<String> sentMessages = new ArrayList<>();
     private static final int MAX_MESSAGES = 50;
+    private static final int MAX_SENT_HISTORY = 100;
+    private static int sentHistoryIndex = -1;
     
     public static void addMessage(Component content) {
         String text = content.getString();
@@ -39,6 +43,51 @@ public class ChatHistory {
         }
     }
     
+    // История отправленных сообщений
+    public static void addSentMessage(String message) {
+        if (message == null || message.trim().isEmpty()) return;
+        
+        // Не добавляем дубликаты подряд
+        if (!sentMessages.isEmpty() && sentMessages.get(0).equals(message)) {
+            return;
+        }
+        
+        sentMessages.add(0, message);
+        
+        while (sentMessages.size() > MAX_SENT_HISTORY) {
+            sentMessages.remove(sentMessages.size() - 1);
+        }
+        
+        resetHistoryIndex();
+    }
+    
+    public static void resetHistoryIndex() {
+        sentHistoryIndex = -1;
+    }
+    
+    public static String getPreviousMessage() {
+        if (sentMessages.isEmpty()) return null;
+        
+        sentHistoryIndex++;
+        if (sentHistoryIndex >= sentMessages.size()) {
+            sentHistoryIndex = sentMessages.size() - 1;
+        }
+        
+        return sentMessages.get(sentHistoryIndex);
+    }
+    
+    public static String getNextMessage() {
+        if (sentMessages.isEmpty() || sentHistoryIndex < 0) return "";
+        
+        sentHistoryIndex--;
+        if (sentHistoryIndex < 0) {
+            sentHistoryIndex = -1;
+            return "";
+        }
+        
+        return sentMessages.get(sentHistoryIndex);
+    }
+    
     public static void clearChat() {
         messages.clear();
     }
@@ -67,7 +116,8 @@ public class ChatHistory {
         }
         
         public boolean isRecent() {
-            return System.currentTimeMillis() - timestamp < 10000;
+            int duration = ChatConfig.getMessageDuration() * 1000;
+            return System.currentTimeMillis() - timestamp < duration;
         }
     }
 }

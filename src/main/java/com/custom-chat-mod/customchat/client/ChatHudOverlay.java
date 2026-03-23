@@ -22,12 +22,13 @@ public class ChatHudOverlay {
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int screenHeight = mc.getWindow().getGuiScaledHeight();
         
-        int centerX = screenWidth / 2;
-        int startY = screenHeight / 2 + 170;
+        // Динамическая позиция из конфига
+        int posX = (int) (screenWidth * ChatConfig.getChatPositionX() / 100.0);
+        int posY = (int) (screenHeight * ChatConfig.getChatPositionY() / 100.0);
         
         int lineHeight = 16;
         int padding = 8;
-        int headSize = 14;
+        int headSize = ChatConfig.showPlayerHeads() ? 14 : 0;
         
         int visibleCount = 0;
         int maxTextWidth = 0;
@@ -51,8 +52,14 @@ public class ChatHudOverlay {
         if (boxWidth > screenWidth - 40) boxWidth = screenWidth - 40;
         
         int boxHeight = visibleCount * lineHeight + padding * 2;
-        int boxX = centerX - boxWidth / 2;
-        int boxY = startY;
+        int boxX = posX - boxWidth / 2;
+        int boxY = posY - boxHeight / 2;
+        
+        // Ограничиваем границы экрана
+        if (boxX < 5) boxX = 5;
+        if (boxX + boxWidth > screenWidth - 5) boxX = screenWidth - boxWidth - 5;
+        if (boxY < 5) boxY = 5;
+        if (boxY + boxHeight > screenHeight - 5) boxY = screenHeight - boxHeight - 5;
         
         GuiComponent.fill(poseStack, boxX, boxY, boxX + boxWidth, boxY + boxHeight, 0xB0101010);
         
@@ -60,12 +67,15 @@ public class ChatHudOverlay {
         for (ChatHistory.ChatMessage msg : messages) {
             if (!msg.isRecent()) continue;
             
-            renderPlayerHead(poseStack, mc, boxX + padding, y);
+            if (ChatConfig.showPlayerHeads()) {
+                renderPlayerHead(poseStack, mc, boxX + padding, y);
+            }
             
             String colorCode = getColorForSender(msg.sender, mc);
             String formattedText = colorCode + msg.sender + "§7: §f" + msg.message;
             
-            mc.font.drawShadow(poseStack, formattedText, boxX + padding + headSize, y + 2, 0xFFFFFF);
+            int textX = boxX + padding + headSize;
+            mc.font.drawShadow(poseStack, formattedText, textX, y + 2, 0xFFFFFF);
             
             y += lineHeight;
         }

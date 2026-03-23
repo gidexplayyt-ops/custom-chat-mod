@@ -5,12 +5,20 @@ issueTrackerURL="https://github.com/gidexplayyt-ops/custom-chat-mod/issues"
 
 [[mods]]
 modId="customchat"
-version="1.0.0"
+version="2.0.0-1.19.2"
 displayName="Custom Chat Mod"
 displayURL="https://github.com/gidexplayyt-ops/custom-chat-mod"
 authors="GidexPlayYT"
 description='''
-Кастомный чат по центру экрана с головами игроков и цветными никами.'''
+Кастомный чат для Minecraft с расширенными возможностями.
+
+Что нового в v2.0.0:
+- GUI настроек (F7) с перетаскиванием позиции
+- История сообщений (стрелки вверх/вниз)
+- TAB автодополнение команд
+- Конфиг файлы в .minecraft/custom-chat-mod/
+- Настройка голов NPC в heads.json
+'''
 
 [[dependencies.customchat]]
     modId="forge"
