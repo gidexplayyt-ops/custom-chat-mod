@@ -48,5 +48,5 @@
 ### Кастомный ник и цвет
 ![Custom Nickname](screenshots/custom_nickname.png)
 
-### Настройки
+### Настройки (v2.1.0)
 ![Settings](screenshots/chat_settings.png)
