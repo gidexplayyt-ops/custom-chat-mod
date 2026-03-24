@@ -1,4 +1,4 @@
-# Custom Chat Mod
+# Custom Chat
 
 Кастомный чат для Minecraft 1.19.2 Forge с расширенными возможностями.
 
